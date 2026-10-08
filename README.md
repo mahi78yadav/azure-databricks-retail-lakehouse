@@ -2,6 +2,13 @@ Absolutely. Below is a complete, final README tailored to the project you actual
 You can replace the entire existing README.md with this content.
 # Azure Databricks Retail Lakehouse
 
+# Azure Databricks Retail Lakehouse
+## Architecture
+
+![Azure Databricks Retail Lakehouse Architecture](architecture/azure-databricks-retail-lakehouse-architecture.png)
+
+## 1. Project Overview
+
 ## 1. Project Overview
 
 This project demonstrates an end-to-end **Retail Data Engineering Lakehouse** built using **Azure Databricks and Azure Data Lake Storage Gen2**.
