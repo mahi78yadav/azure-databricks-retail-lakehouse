@@ -1,674 +1,761 @@
+Absolutely. Below is a complete, final README tailored to the project you actually built, including ADLS Gen2, Azure Databricks, Delta Lake, PySpark, Auto Loader, Unity Catalog, Bronze/Silver/Gold, Data Quality, SQL analytics, Jobs, and GitHub.
+You can replace the entire existing README.md with this content.
 # Azure Databricks Retail Lakehouse
 
 ## 1. Project Overview
 
-This project demonstrates an end-to-end retail data engineering solution using Azure Databricks and Azure Data Lake Storage Gen2.
+This project demonstrates an end-to-end **Retail Data Engineering Lakehouse** built using **Azure Databricks and Azure Data Lake Storage Gen2**.
 
-The solution follows the **Medallion Architecture** with Bronze, Silver, and Gold data layers.
+The solution follows the **Medallion Architecture** with:
 
-The project uses:
+- Bronze – Raw/Ingested Data
+- Silver – Cleansed and Transformed Data
+- Gold – Business-Ready Data
 
-- Azure Data Lake Storage Gen2 for cloud data storage
-- Azure Databricks for data engineering and Spark processing
-- PySpark for data transformation
-- Delta Lake for reliable data storage
-- Unity Catalog for security and governance
-- Databricks SQL for analytics
-- GitHub for source control
-- Power BI for reporting
+The project demonstrates practical implementation of:
 
-### High-Level Architecture
+- Azure Data Lake Storage Gen2
+- Azure Databricks
+- PySpark
+- Delta Lake
+- Auto Loader
+- Unity Catalog
+- External Locations
+- Storage Credentials
+- Data Quality
+- Databricks SQL
+- SQL Warehouse
+- Databricks Jobs
+- Incremental Data Processing
+- GitHub Source Control
+- Security and Governance
+
+---
+
+# 2. Business Scenario
+
+A retail organization receives customer, product, order, and store information from operational systems.
+
+The objective is to build a centralized cloud data platform that can:
+
+1. Ingest raw retail data
+2. Store data in Azure Data Lake
+3. Process data using Apache Spark
+4. Clean and standardize the data
+5. Handle incremental files
+6. Apply data quality rules
+7. Create business-ready datasets
+8. Provide SQL-based analytics
+9. Govern data using Unity Catalog
+10. Schedule and monitor data pipelines
+
+---
+
+# 3. High-Level Architecture
 
 ```text
-Source Files
-     |
-     v
-ADLS Gen2
-     |
-     v
-Bronze Layer
-     |
-     v
-Silver Layer
-     |
-     v
-Gold Layer
-     |
-     v
-Databricks SQL / Power BI# azure-databricks-retail-lakehouse
-End-to-end Azure Databricks retail lakehouse project using ADLS Gen2, Delta Lake, PySpark, Unity Catalog, incremental processing, and data governance.
+                 Retail Source Files
+                        |
+                        | CSV
+                        v
+              Azure Data Lake Storage Gen2
+                        |
+                     source
+                        |
+                        v
+             +----------------------+
+             |      BRONZE          |
+             |  Raw Delta Tables    |
+             +----------------------+
+                        |
+                        | PySpark
+                        v
+             +----------------------+
+             |      SILVER          |
+             | Cleaned / Standardized|
+             |      Delta Tables    |
+             +----------------------+
+                        |
+                        | Business Transformations
+                        v
+             +----------------------+
+             |       GOLD           |
+             | Business-Ready Data  |
+             +----------------------+
+                        |
+                        v
+               Unity Catalog
+                        |
+                        v
+                Databricks SQL
+                        |
+                        v
+                Analytics / BI
 
-2. Business Scenario
-The project uses a retail/e-commerce business scenario containing:
-- Customers
-- Products
-- Orders
-- Regions
-The objective is to build a scalable and governed data platform that can:
-1. Ingest raw data
-2. Store data in a Data Lake
-3. Process data using Apache Spark
-4. Clean and transform data
-5. Create business-ready datasets
-6. Process new data incrementally
-7. Apply data quality rules
-8. Provide centralized security and governance
-9. Support analytics and reporting
-3. Azure Services
-Azure / Technology	Purpose
+4. Azure Services Used
+Service	Purpose
 Azure Data Lake Storage Gen2	Cloud data storage
 Azure Databricks	Data engineering and Spark processing
-Apache Spark	Distributed data processing
-PySpark	Data transformation
-Delta Lake	Reliable Lakehouse storage
 Unity Catalog	Data governance and security
-Databricks SQL	SQL analytics
+Delta Lake	Reliable lakehouse storage
+Databricks SQL Warehouse	SQL analytics
+Databricks Jobs	Scheduling and orchestration
+Azure Managed Identity	Secure storage access
 GitHub	Source control
-Power BI	Reporting and visualization
 
 
-4. Lakehouse Architecture
-This project follows the Medallion Architecture.
-                    Azure Data Lake Storage Gen2
-                              |
-                              v
-                         Bronze Layer
-                              |
-                              v
-                         Silver Layer
-                              |
-                              v
-                           Gold Layer
-                              |
-                              v
-                    Databricks SQL / Power BI
+5. Azure Resources
+Resource Group
+rg-databricks-retail-dev
 
+Azure Databricks Workspace
+dbw-retail-lakehouse-dev
+
+ADLS Gen2 Storage Account
+stdatabricksretail2026
+
+Storage Containers
+source
+bronze
+silver
+gold
+
+Access Connector
+ac-databricks-retail-dev
+
+The Access Connector uses a System Assigned Managed Identity to provide secure access to ADLS Gen2.
+6. Source Data
+The project uses four retail datasets.
+Customers
+Products
+Orders
+Stores
+
+Customers
+Contains customer information such as:
+- Customer ID
+- Customer Name
+- City
+- State
+- Customer Segment
+- Registration Date
+Products
+Contains:
+- Product ID
+- Product Name
+- Category
+- Subcategory
+- Unit Price
+Orders
+Contains:
+- Order ID
+- Customer ID
+- Product ID
+- Store ID
+- Order Date
+- Quantity
+- Order Status
+- Payment Method
+Stores
+Contains:
+- Store ID
+- Store Name
+- City
+- State
+- Region
+7. Source Data Structure
+The source data is stored in ADLS Gen2 using a folder-based structure.
+stdatabricksretail2026
+│
+├── source
+│   ├── customers
+│   │   └── customers.csv
+│   │
+│   ├── products
+│   │   └── products.csv
+│   │
+│   ├── orders
+│   │   └── orders.csv
+│   │
+│   └── stores
+│       └── stores.csv
+│
+├── bronze
+│
+├── silver
+│
+└── gold
+
+8. Medallion Architecture
 Bronze Layer
-The Bronze layer contains raw data ingested from the source system.
-Minimal transformations are applied at this stage.
-Bronze
- |
- +-- customers
- +-- products
- +-- orders
- +-- regions
+The Bronze layer stores data ingested from the source system with minimal transformation.
+Purpose:
+- Preserve source data
+- Create reliable Delta storage
+- Provide replay capability
+- Support incremental ingestion
+Bronze tables:
+retail.bronze.customers
+retail.bronze.products
+retail.bronze.orders
+retail.bronze.stores
 
-Silver Layer
-The Silver layer contains cleaned, validated, standardized, and transformed data.
-Silver
- |
- +-- customers
- +-- products
- +-- orders
- +-- regions
+9. Silver Layer
+The Silver layer contains cleansed and standardized data.
+Transformations include:
+- Removing leading/trailing spaces
+- Standardizing text
+- Converting data types
+- Removing duplicate records
+- Standardizing customer segments
+- Standardizing product categories
+- Standardizing regions
+- Standardizing order status
+- Standardizing payment methods
+Silver tables:
+retail.silver.customers
+retail.silver.products
+retail.silver.orders
+retail.silver.stores
 
-Typical transformations include:
-- Removing duplicates
-- Handling null values
-- Standardizing data types
-- Data validation
-- Column transformations
-- Business rules
-Gold Layer
-The Gold layer contains business-ready datasets optimized for analytics and reporting.
-Example Gold datasets:
-Gold
- |
- +-- Customer Dimension
- +-- Product Dimension
- +-- Region Dimension
- +-- Sales Fact
- +-- Customer Sales Summary
+10. Gold Layer
+The Gold layer contains business-ready data designed for analytics.
+The project creates a business-level sales dataset by joining:
+Orders
+   |
+   +---- Customers
+   |
+   +---- Products
+   |
+   +---- Stores
 
-5. Technologies
-The project uses the following technologies:
-- Azure Databricks
-- Apache Spark
-- PySpark
-- Delta Lake
-- Azure Data Lake Storage Gen2
-- Unity Catalog
-- Databricks SQL
-- GitHub
-- Power BI
-6. Project Phases
-Phase 1 - Azure Environment Setup
-Tasks:
-- Create Azure Resource Group
-- Create ADLS Gen2 Storage Account
-- Create storage containers
-- Upload sample source data
-- Create Azure Databricks Workspace
-- Configure required Azure permissions
-Phase 2 - Unity Catalog and Security
-Tasks:
-- Configure Unity Catalog
-- Understand Metastore
-- Create Catalog
-- Create Schemas
-- Configure Storage Credentials
-- Configure External Locations
-- Create users and groups
-- Configure permissions
-- Implement data access governance
-Security hierarchy:
-Metastore
+The resulting dataset contains business attributes such as:
+- Order ID
+- Order Date
+- Customer
+- Customer Segment
+- Product
+- Category
+- Subcategory
+- Unit Price
+- Quantity
+- Order Status
+- Payment Method
+- Store
+- Store Region
+Gold table:
+retail.gold.gold_sales
+
+11. Data Relationships
+The primary relationships are:
+customers
     |
-    +-- Catalog
-          |
-          +-- Schema
-                |
-                +-- Tables
-                +-- Views
-                +-- Volumes
+    | customer_id
+    v
+orders
+    |
+    | product_id
+    v
+products
 
-Phase 3 - Bronze Layer
-Tasks:
-- Read source files from ADLS Gen2
-- Use PySpark for ingestion
-- Create Bronze Delta tables
-- Implement incremental ingestion
-- Configure checkpoints
-- Explore Databricks Auto Loader
+orders
+    |
+    | store_id
+    v
+stores
+
+These relationships are used to create the business-ready Gold dataset.
+12. Delta Lake
+The project uses Delta Lake as the storage format for Bronze, Silver, and Gold layers.
+Benefits demonstrated:
+- ACID transactions
+- Schema management
+- Reliable writes
+- Time travel
+- Table history
+- Data versioning
+- UPDATE support
+- DELETE support
+- MERGE capability
+- Reliable concurrent data processing
 Example:
+SELECT *
+FROM retail.gold.gold_sales;
+
+13. Auto Loader
+Azure Databricks Auto Loader is used for incremental order ingestion.
+Auto Loader processes newly arriving files without repeatedly processing previously discovered files.
+Flow:
+New Order File
+      |
+      v
 ADLS Gen2
-    |
-    v
-Source Files
-    |
-    v
+      |
+      v
 Auto Loader
-    |
-    v
-Bronze Delta Tables
+      |
+      v
+Bronze Delta
 
-Phase 4 - Silver Layer
-Tasks:
-- Read Bronze Delta tables
-- Clean data
-- Handle null values
-- Remove duplicate records
-- Standardize columns
-- Convert data types
-- Apply business transformations
-- Create Silver Delta tables
-Example:
-Bronze
-   |
-   v
-PySpark Transformations
-   |
-   v
-Silver Delta Tables
+The project tested incremental order ingestion successfully.
+The final Bronze Auto Loader dataset contains:
+25 orders
 
-Phase 5 - Gold Layer
-Tasks:
-- Create dimension tables
-- Create fact tables
-- Join business entities
-- Create analytical datasets
-- Create customer sales summaries
-- Optimize Gold tables
-Example:
-Silver
-   |
-   v
-Business Transformations
-   |
-   v
-Gold
-   |
-   +-- Customer Dimension
-   +-- Product Dimension
-   +-- Region Dimension
-   +-- Sales Fact
-
-Phase 6 - Incremental Processing
-The project will implement incremental data processing so that only new files or new records are processed instead of reprocessing the complete dataset.
-Technologies/features:
-- Databricks Auto Loader
-- Checkpoints
-- Structured Streaming
-- Delta Lake
-- Schema evolution
-Example:
-New File
-   |
-   v
-Auto Loader
-   |
-   v
-Checkpoint
-   |
-   v
-Bronze Delta Table
-   |
-   v
-Silver
-   |
-   v
-Gold
-
-Phase 7 - Data Quality
-Data quality checks will be implemented for:
+This demonstrates the ability to process newly arriving files incrementally.
+14. Data Quality
+A dedicated Data Quality notebook was implemented.
+Data quality checks include validation of:
 - Null values
 - Duplicate records
-- Invalid records
-- Invalid data types
-- Missing required fields
-- Referential integrity
-- Record counts
-Example:
-Incoming Data
-      |
-      v
-Data Quality Checks
-      |
-      +------ Valid ------> Silver
-      |
-      +------ Invalid ----> Rejected / Error Records
+- Required columns
+- Data types
+- Customer IDs
+- Product IDs
+- Store IDs
+- Quantity
+- Order status
+- Payment method
+- Referential relationships
+- Valid order records
+Invalid records can be separated from valid records for further investigation.
+The project also validates the resulting Silver data after quality processing.
+15. Unity Catalog
+The project uses Unity Catalog for centralized data governance.
+Catalog structure:
+Unity Catalog
+│
+└── retail
+    │
+    ├── bronze
+    │   ├── customers
+    │   ├── products
+    │   ├── orders
+    │   └── stores
+    │
+    ├── silver
+    │   ├── customers
+    │   ├── products
+    │   ├── orders
+    │   └── stores
+    │
+    └── gold
+        └── gold_sales
 
-Phase 8 - Databricks Jobs and Scheduling
-Tasks:
-- Create Databricks Jobs
-- Schedule notebooks
-- Configure task dependencies
-- Configure retries
-- Configure parameters
-- Monitor job execution
-- Handle failures
-Example:
-Bronze Job
-    |
-    v
-Silver Job
-    |
-    v
-Gold Job
+Unity Catalog provides:
+- Centralized metadata
+- Access control
+- Data discovery
+- Table permissions
+- Schema permissions
+- Catalog permissions
+- Data governance
+- Auditability
+16. Managed Identity and Storage Security
+The project uses an Azure Databricks Access Connector with a System Assigned Managed Identity.
+The identity is granted:
+Storage Blob Data Contributor
 
-Phase 9 - Monitoring
-The project will demonstrate monitoring of:
-- Databricks Jobs
-- Notebook execution
-- Spark applications
-- Failed tasks
-- Processing time
-- Data quality results
-- Incremental processing
-Phase 10 - GitHub and CI/CD
-GitHub will be used for source control.
-The project will follow a feature branch workflow.
-main
- |
- +-- feature/bronze-ingestion
- |
- +-- feature/silver-transformation
- |
- +-- feature/gold-layer
- |
- +-- feature/unity-catalog
- |
- +-- feature/incremental-processing
- |
- +-- Pull Request
- |
- +-- Merge to main
+on the ADLS Gen2 storage account.
+This allows Databricks to securely access the storage without embedding storage account keys or passwords in notebooks.
+17. Storage Credential
+A Unity Catalog storage credential was created:
+cred_adls_retail
 
-Git workflow:
-Create Branch
-      |
-      v
-Develop
-      |
-      v
-Commit
-      |
-      v
-Push
-      |
-      v
-Pull Request
-      |
-      v
-Code Review
-      |
-      v
-Merge to Main
-
-7. Data Flow
-The complete data flow is:
-Source CSV Files
+The credential uses the Azure Databricks Access Connector managed identity.
+This provides secure authentication between:
+Azure Databricks
+       |
+       v
+Managed Identity
        |
        v
 ADLS Gen2
-       |
-       v
-Databricks Auto Loader
-       |
-       v
-Bronze Delta Tables
-       |
-       v
-PySpark Transformations
-       |
-       v
-Silver Delta Tables
-       |
-       v
-Business Transformations
-       |
-       v
-Gold Delta Tables
-       |
-       v
-Databricks SQL
-       |
-       v
-Power BI
 
-8. Unity Catalog Governance
-Unity Catalog provides centralized governance for the Lakehouse.
-The main hierarchy is:
-Metastore
-    |
-    +-- Catalog
-          |
-          +-- Schema
-                |
-                +-- Tables
-                +-- Views
-                +-- Volumes
+18. External Locations
+Unity Catalog external locations are used to control access to cloud storage paths.
+Example storage location:
+abfss://source@stdatabricksretail2026.dfs.core.windows.net/
 
-Security and governance will include:
+The external-location approach separates:
+- Storage authentication
+- Storage authorization
+- Data location
+- Unity Catalog metadata
+19. Databricks SQL
+The Gold data is queried using Databricks SQL.
+Example:
+SELECT *
+FROM retail.gold.gold_sales
+LIMIT 10;
+
+Row-count validation:
+SELECT COUNT(*) AS row_count
+FROM retail.gold.gold_sales;
+
+The Gold table was successfully queried through a SQL Warehouse.
+20. Delta Table History
+Delta table history was used to demonstrate data versioning and transaction history.
+Example:
+DESCRIBE HISTORY retail.gold.gold_sales;
+
+This provides information about:
+- Table versions
+- Operations
+- Timestamps
 - Users
-- Groups
-- Permissions
-- Catalog-level access
-- Schema-level access
-- Table-level access
-- Storage Credentials
-- External Locations
-- Data access control
+- Job execution information
+- Write operations
+The project also demonstrated restoring a Delta table to a previous version.
 Example:
-Users
-  |
-  v
-Groups
-  |
-  v
-Catalog
-  |
-  v
-Schema
-  |
-  v
-Tables
+RESTORE TABLE retail.gold.gold_sales
+TO VERSION AS OF 4;
 
-9. Delta Lake
-Delta Lake will be used as the primary storage format for the Bronze, Silver, and Gold layers.
-Important Delta Lake capabilities demonstrated in this project:
-- ACID transactions
-- Schema enforcement
-- Schema evolution
-- Time Travel
-- MERGE
-- UPDATE
-- DELETE
-- Reliable incremental processing
-Example:
-Data Files
-    |
-    v
-Delta Lake
-    |
-    +-- Transaction Log
-    |
-    +-- Data Files
+This demonstrates the practical use of Delta Lake Time Travel and recovery.
+21. Databricks Jobs
+A Databricks Job was created to orchestrate the lakehouse processing.
+Job:
+JOB_Retail_Lakehouse_ETL
 
-10. PySpark Data Processing
-PySpark will be used for distributed data processing.
-The project will demonstrate:
-- Reading data
-- Writing data
-- Filtering
-- Selecting columns
-- Joining datasets
-- Aggregation
-- Group By
-- Deduplication
-- Null handling
-- Data type conversion
-- Window functions
-- Business transformations
-Example:
-Read
-  |
-  v
-Transform
-  |
-  v
-Validate
-  |
-  v
-Write
+The job is configured for scheduled execution.
+Processing includes the major lakehouse notebooks:
+Bronze
+   ↓
+Auto Loader
+   ↓
+Silver
+   ↓
+Gold
+   ↓
+Data Quality
 
-11. Data Transformation
-The following transformations will be demonstrated:
-Customers
-- Customer data cleansing
-- Duplicate removal
-- Null handling
-- Standardization
-Products
-- Product data cleansing
-- Product category standardization
-- Price validation
-Orders
-- Order validation
-- Customer relationship validation
-- Product relationship validation
-- Sales calculations
-Regions
-- Region mapping
-- State/region standardization
-12. Performance Optimization
-The project will demonstrate important Databricks and Spark optimization techniques:
-- Partitioning
-- Efficient joins
-- Broadcast joins where appropriate
-- Predicate pushdown
-- Data pruning
-- Delta optimization
-- Appropriate file sizes
-- Spark caching where appropriate
-- Query optimization
-The objective is to understand how to build scalable and efficient data pipelines.
-13. Testing
-The following scenarios will be tested:
-Initial Load
-Verify that the complete source dataset is successfully loaded.
-Incremental Load
-Add a new file and verify that only the new data is processed.
-Duplicate Data
-Introduce duplicate records and verify that the data quality logic handles them.
-Null Values
-Introduce null values and verify the cleansing logic.
-Invalid Records
-Introduce invalid records and verify that they are identified.
-Schema Changes
-Test schema evolution and verify the behavior of the pipeline.
-Failure Handling
-Test failed processing and verify job failure handling and retry behavior.
-Security
-Verify that users and groups can access only the data they are authorized to access.
-14. Expected Lakehouse Structure
-The final Lakehouse will follow a structure similar to:
-Catalog
- |
- +-- retail
-      |
-      +-- bronze
-      |     |
-      |     +-- customers
-      |     +-- products
-      |     +-- orders
-      |     +-- regions
-      |
-      +-- silver
-      |     |
-      |     +-- customers
-      |     +-- products
-      |     +-- orders
-      |     +-- regions
-      |
-      +-- gold
-            |
-            +-- dim_customer
-            +-- dim_product
-            +-- dim_region
-            +-- fact_sales
-            +-- customer_sales_summary
+The job has been executed and successfully validated through the Databricks Jobs interface.
+22. Notebooks
+The project contains five main notebooks.
+01_Bronze_Ingestion
+Responsibilities:
+- Read source CSV files
+- Infer/read schema
+- Create Bronze Delta datasets
+- Validate Bronze data
+02_Silver_Transformation
+Responsibilities:
+- Read Bronze data
+- Clean data
+- Standardize values
+- Remove duplicates
+- Cast data types
+- Create Silver Delta datasets
+03_Gold_Business_Layer
+Responsibilities:
+- Join business entities
+- Create business-ready dataset
+- Calculate business metrics
+- Create Gold Delta data
+04_AutoLoader_Ingestion
+Responsibilities:
+- Detect new files
+- Process incremental files
+- Write incremental data to Delta
+- Validate incremental processing
+05_Data_Quality
+Responsibilities:
+- Validate records
+- Identify invalid data
+- Check duplicates
+- Check nulls
+- Validate relationships
+- Produce validated data
+23. GitHub Structure
+The source code is maintained in GitHub.
+azure-databricks-retail-lakehouse
+│
+├── README.md
+│
+└── notebooks
+    │
+    ├── 01_Bronze_Ingestion.py
+    ├── 02_Silver_Transformation.py
+    ├── 03_Gold_Business_Layer.py
+    ├── 04_AutoLoader_Ingestion.py
+    └── 05_Data_Quality.py
 
-15. Project Deliverables
-The final project will contain:
-- Azure infrastructure
-- ADLS Gen2 storage
-- Databricks workspace
-- Unity Catalog configuration
-- Storage Credentials
-- External Locations
-- Bronze notebooks
-- Silver notebooks
-- Gold notebooks
-- Delta tables
-- Auto Loader implementation
-- Incremental processing
-- Data quality checks
-- Databricks Jobs
-- Monitoring
-- GitHub source control
-- Architecture documentation
-- Interview preparation material
-16. Interview Explanation
-A concise explanation of the project:
-I built an end-to-end retail Lakehouse platform using Azure Databricks and Azure Data Lake Storage Gen2. The solution follows the Medallion Architecture with Bronze, Silver, and Gold layers. I used PySpark and Delta Lake for scalable data processing and reliable storage. Auto Loader was used for incremental file ingestion, while Unity Catalog provided centralized governance and security. I also implemented data quality checks, Databricks Jobs, monitoring, GitHub source control, and analytics-ready Gold datasets.
+GitHub is used for:
+- Source control
+- Version history
+- Collaboration
+- Code review
+- Project documentation
+- Portfolio presentation
+24. Validation Performed
+The project was tested at multiple stages.
+Bronze Validation
+Customers : 10
+Products  : 10
+Orders    : 20 initially
+Stores    : 7
 
-17. Key Interview Topics
-This project provides practical experience with:
+Auto Loader Validation
+Incremental order files were processed successfully.
+Final Auto Loader Bronze count:
+Orders : 25
+
+Silver Validation
+Customers : 10
+Products  : 10
+Orders    : 25
+Stores    : 7
+
+Gold Validation
+The Gold business table was successfully queried through Databricks SQL.
+Delta Validation
+The project validated:
+- Table history
+- Table versions
+- UPDATE operations
+- Restore capability
+- Row counts
+25. Key Technical Concepts Demonstrated
+This project provides hands-on experience with:
+Azure
+- Azure Data Lake Storage Gen2
 - Azure Databricks
-- Apache Spark
+- Managed Identity
+- Access Connector
+- RBAC
+Databricks
+- Workspace
+- Notebooks
+- Compute
+- Serverless SQL Warehouse
+- Jobs
+- Runs
+- Monitoring
+Apache Spark
 - PySpark
-- Delta Lake
-- Lakehouse Architecture
-- Medallion Architecture
-- Unity Catalog
+- DataFrames
+- Spark transformations
+- Spark actions
+- Schema handling
+- Joins
+- Deduplication
+Delta Lake
+- Delta tables
+- ACID transactions
+- Schema management
+- Time Travel
+- Table History
+- UPDATE
+- RESTORE
+Auto Loader
+- Incremental ingestion
+- New-file detection
+- Checkpoint-based processing
+- Schema handling
+Unity Catalog
 - Catalogs
 - Schemas
 - Tables
 - Storage Credentials
 - External Locations
-- Auto Loader
-- Incremental Processing
-- Checkpoints
-- Structured Streaming
-- Data Quality
-- Databricks Jobs
-- Spark Optimization
-- GitHub
-- CI/CD
-- Databricks SQL
-18. Future Enhancements
-Potential future enhancements include:
+- Permissions
+- Governance
+SQL
+- SELECT
+- JOIN
+- GROUP BY
+- COUNT
+- UPDATE
+- DESCRIBE HISTORY
+- RESTORE TABLE
+- Table management
+GitHub
+- Repository
+- Main branch
+- Source control
+- Notebook versioning
+- Project documentation
+26. End-to-End Data Flow
+                 SOURCE
+                   |
+                   v
+        +----------------------+
+        |     ADLS Gen2        |
+        |   CSV Source Files   |
+        +----------------------+
+                   |
+                   v
+        +----------------------+
+        |       BRONZE         |
+        |   Raw Delta Data     |
+        +----------------------+
+                   |
+          PySpark / Auto Loader
+                   |
+                   v
+        +----------------------+
+        |       SILVER         |
+        | Cleansed Delta Data  |
+        +----------------------+
+                   |
+          Business Transformations
+                   |
+                   v
+        +----------------------+
+        |        GOLD          |
+        | Business Ready Data  |
+        +----------------------+
+                   |
+                   v
+        +----------------------+
+        |    Unity Catalog     |
+        | Security & Governance|
+        +----------------------+
+                   |
+                   v
+        +----------------------+
+        |  Databricks SQL      |
+        | Analytics / Reporting|
+        +----------------------+
+
+27. Interview Explanation
+30-Second Explanation
+I developed an end-to-end retail lakehouse using Azure Databricks and ADLS Gen2. Source CSV files are ingested into the Bronze layer as Delta tables. PySpark transformations clean and standardize the data in the Silver layer. Auto Loader is used for incremental file ingestion. The Gold layer combines orders with customer, product, and store information to create business-ready datasets. Unity Catalog provides centralized governance and access control, while Databricks SQL is used for analytics. The entire process is orchestrated using Databricks Jobs and the notebooks are maintained in GitHub.
+
+28. Architecture Interview Explanation
+A typical interview discussion can be explained as:
+Why ADLS Gen2?
+        ↓
+Scalable cloud storage
+
+Why Databricks?
+        ↓
+Distributed Spark processing
+
+Why Delta Lake?
+        ↓
+Reliable ACID lakehouse tables
+
+Why Bronze/Silver/Gold?
+        ↓
+Separate ingestion, cleansing and business layers
+
+Why Auto Loader?
+        ↓
+Efficient incremental file ingestion
+
+Why Unity Catalog?
+        ↓
+Centralized security and governance
+
+Why Databricks SQL?
+        ↓
+SQL analytics on lakehouse data
+
+Why Jobs?
+        ↓
+Automated and scheduled processing
+
+Why GitHub?
+        ↓
+Source control and collaboration
+
+29. Production Enhancements
+Possible future improvements include:
 - Azure Data Factory orchestration
-- Azure Key Vault integration
-- Microsoft Purview integration
+- Parameterized notebooks
+- Metadata-driven ingestion
+- Advanced incremental MERGE processing
+- Slowly Changing Dimensions
+- Schema evolution
 - Advanced data quality framework
-- Real-time streaming
-- Azure Event Hubs integration
-- Machine Learning integration
-- AI/LLM integration
-- Databricks AI/BI
-- Databricks Genie
-- Advanced Power BI semantic models
-19. Final Architecture
-                         +------------------+
-                         |   Source Files   |
-                         +--------+---------+
-                                  |
-                                  v
-                         +------------------+
-                         |    ADLS Gen2     |
-                         +--------+---------+
-                                  |
-                                  v
-                         +------------------+
-                         | Databricks Auto  |
-                         |     Loader       |
-                         +--------+---------+
-                                  |
-                                  v
-                    +--------------------------+
-                    |      Bronze Layer        |
-                    |       Delta Tables       |
-                    +------------+-------------+
-                                 |
-                                 v
-                    +--------------------------+
-                    |      Silver Layer        |
-                    |   Cleaned/Transformed    |
-                    +------------+-------------+
-                                 |
-                                 v
-                    +--------------------------+
-                    |       Gold Layer         |
-                    | Business Ready Data      |
-                    +------------+-------------+
-                                 |
-                    +------------+-------------+
-                    |                          |
-                    v                          v
-             +-------------+            +-------------+
-             | Databricks  |            |   Power BI  |
-             |     SQL     |            |  Reporting  |
-             +-------------+            +-------------+
+- Alerting and notifications
+- Power BI dashboards
+- CI/CD using Azure DevOps or GitHub Actions
+- Automated unit testing
+- Environment separation for Dev/Test/Prod
+- Infrastructure as Code
+- Secret management using Azure Key Vault
+- Fine-grained Unity Catalog security
+- Row-level and column-level security
+- Data masking
+- Cost optimization
+- Performance optimization
+30. Project Outcome
+This project demonstrates the design and implementation of a practical Azure Databricks Lakehouse platform covering the complete data engineering lifecycle:
+Data Ingestion
+      ↓
+Cloud Storage
+      ↓
+Spark Processing
+      ↓
+Bronze
+      ↓
+Silver
+      ↓
+Gold
+      ↓
+Data Quality
+      ↓
+Incremental Processing
+      ↓
+Governance
+      ↓
+SQL Analytics
+      ↓
+Job Scheduling
+      ↓
+GitHub Source Control
 
-                    Unity Catalog
-                         |
-              Governance & Security
-                         |
-                    GitHub / CI-CD
+The project provides hands-on experience relevant to Azure Data Engineer, Databricks Data Engineer, Senior Data Engineer, and Azure Data Architect roles.
+31. Technologies
+Azure
+Azure Data Lake Storage Gen2
+Azure Databricks
+Apache Spark
+PySpark
+Delta Lake
+Auto Loader
+Unity Catalog
+Databricks SQL
+SQL Warehouse
+Databricks Jobs
+Managed Identity
+RBAC
+GitHub
 
-20. Project Status
-Phase	Status
-GitHub Repository	In Progress
-README	In Progress
-Azure Environment	Not Started
-Unity Catalog	Not Started
-Bronze Layer	Not Started
-Silver Layer	Not Started
-Gold Layer	Not Started
-Incremental Processing	Not Started
-Data Quality	Not Started
-Jobs & Scheduling	Not Started
-Monitoring	Not Started
-GitHub / CI-CD	Not Started
-Documentation	Not Started
+32. Project Status
+Azure Environment              : Completed
+ADLS Gen2                      : Completed
+Databricks Workspace           : Completed
+Unity Catalog                  : Completed
+Storage Credential             : Completed
+External Locations             : Completed
+Bronze Layer                   : Completed
+Silver Layer                   : Completed
+Gold Layer                     : Completed
+Auto Loader                    : Completed
+Data Quality                   : Completed
+Delta Lake Validation          : Completed
+SQL Analytics                  : Completed
+Databricks Job                 : Completed
+GitHub Integration             : Completed
+Project Documentation          : Completed
 
+Overall project: End-to-End Implementation Completed
 
-Author
-Azure Data Engineering Portfolio Project
-Technologies: Azure Databricks | ADLS Gen2 | PySpark | Delta Lake | Unity Catalog | GitHub | Power BI
+### One important correction before you paste
 
-### What you should do now
+Use **`Stores`**, not `Regions`, throughout the README. Your actual project has:
 
-1. Open your GitHub repository **`azure-databricks-retail-lakehouse`**.
-2. Open `README.md`.
-3. Replace the existing content with the above.
-4. Click **Commit changes**.
-5. Use this commit message:
+**Customers + Products + Orders + Stores**
+
+and the relationship is:
 
 ```text
-docs: Add Azure Databricks Lakehouse project README
+Customers ──┐
+            │
+Products ───┼──> Orders ──> Gold Sales
+            │
+Stores ─────┘
 
-6. Commit directly to main for now.
-After this, do not start creating Databricks resources yet. We should first verify that the GitHub README is committed successfully, then proceed one step at a time with Phase 1 — Azure Databricks Environment Setup.
+That makes the README accurately match the project you actually built.
