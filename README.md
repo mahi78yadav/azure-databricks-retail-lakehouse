@@ -5,7 +5,7 @@ You can replace the entire existing README.md with this content.
 # Azure Databricks Retail Lakehouse
 ## Architecture
 
-![Azure Databricks Retail Lakehouse Architecture](architecture/azure-databricks-retail-lakehouse-architecture.png)
+![Azure Databricks Retail Lakehouse Architecture](architecture/architecture.png)
 
 ## 1. Project Overview
 
