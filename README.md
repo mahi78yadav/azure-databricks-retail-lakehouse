@@ -3,7 +3,7 @@ You can replace the entire existing README.md with this content.
 # Azure Databricks Retail Lakehouse
 
 # Azure Databricks Retail Lakehouse
-## Architecture
+## Architecture 
 
 ![Azure Databricks Retail Lakehouse Architecture](architecture/architecture.png)
 
